@@ -27,7 +27,7 @@ Single-cell type annotation faces critical challenges in real-world scenarios, i
 
 ### Problem Formulation
 
-- **Class-Incremental Annotation**: Sequential introduction of disjoint cell type sets $\mathcal{Y}_τ$  
+- **Class-Incremental Annotation**: Sequential introduction of disjoint cell type sets \\( \mathcal{Y}_\tau \\)
 - **Challenges**:  
   - Long-tailed distribution (e.g., CD34+ cells: 0.29% in Zheng68k)  
   - High-dimensional sparsity (16,384 genes × extreme zero-inflation)  
@@ -36,11 +36,9 @@ Single-cell type annotation faces critical challenges in real-world scenarios, i
 ### Framework Components
 
 1. **Retrospective Generation Module**  
-   - Dynamic sparse mask $\mathcal{M}_t$ guided by expression quantiles  
+   - Dynamic sparse mask \\( \mathcal{M}_t \\) guided by expression quantiles  
    - Conditional diffusion with text-encoded cell type embeddings  
 2. **Incremental Alignment Module**  
-   - Multi-scale attention alignment ($\mathcal{L}_{attn}$)  
-   - Semantic consistency constraints ($\mathcal{L}_{repr}$, $\mathcal{L}_{logit}$)  
-   - Fuzzy guidance loss for novel-type suppression  
-
-## 
+   - Multi-scale attention alignment (\\( \mathcal{L}_{\text{attn}} \\))  
+   - Semantic consistency constraints (\\( \mathcal{L}_{\text{repr}} \\), \\( \mathcal{L}_{\text{logit}} \\))  
+   - Fuzzy guidance loss for novel-type suppression
