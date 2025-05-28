@@ -454,7 +454,7 @@ class Model(nn.Module):
 
 if __name__ == "__main__":
     # Parameters
-    file_path = r"E:\scrna_data\数据间\Madissoon_Lung_1024.h5ad"
+    file_path = r"He_Long_Bone_1024.h5ad"
     cell_type_column = 'cell_type1'
     batch_size = 256
     checkpoint_path = './pth/stage_02_model.pth'
@@ -465,8 +465,8 @@ if __name__ == "__main__":
         file_path=file_path,
         cell_type_column=cell_type_column,
         batch_size=batch_size,
-        end_1=11,
-        end_2=18
+        end_1=8,
+        end_2=10
     )
 
     # Get DataLoader
