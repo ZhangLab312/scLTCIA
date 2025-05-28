@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-# 维度转接器（将基准模型输出和Unet1D模型输入进行维度匹配）
+# Dynamic Input Receiver (Matches dimensions between base model output and Unet1D model input)
 class DynamicInputReceiver(nn.Module):
     """
     A module that dynamically adjusts to any input dimension and outputs a fixed 1024-dimensional tensor.
@@ -37,7 +37,7 @@ class DynamicInputReceiver(nn.Module):
         return self.linear(x)
 
 
-# 预测器（实现细胞注释预测的功能，返回logits）
+# Predictor (Implements cell annotation prediction and returns logits)
 class PredictorLayer(nn.Module):
     """
     A predictor layer for mapping gene features to cell type predictions with enhanced functionality.
@@ -107,17 +107,17 @@ class PredictorLayer(nn.Module):
         return activations.get(activation, nn.ReLU())  # Default to ReLU
 
 
-# # 创建动态输入接收器
+# # Create dynamic input receiver
 # receiver = DynamicInputReceiver(output_dim=1024)
 #
-# # 输入不同维度的数据
+# # Input data with different dimensions
 # input1 = torch.randn(32, 128)  # batch_size=32, input_dim=128
 # output1 = receiver(input1)
-# print(f"Output shape: {output1.shape}")  # 输出: (32, 1024)
+# print(f"Output shape: {output1.shape}")  # Output: (32, 1024)
 #
 # input2 = torch.randn(64, 256)  # batch_size=64, input_dim=256
 # output2 = receiver(input2)
-# print(f"Output shape: {output2.shape}")  # 输出: (64, 1024)
+# print(f"Output shape: {output2.shape}")  # Output: (64, 1024)
 #
 #
 # num_genes = 1024
@@ -127,7 +127,7 @@ class PredictorLayer(nn.Module):
 # )
 # print(predictor)
 #
-# # 模拟输入
+# # Simulate input
 # x = torch.randn(32, num_genes)  # batch_size=32
 # output = predictor(x)
-# print(f"Output shape: {output.shape}")  # 输出: (32, 10)
+# print(f"Output shape: {output.shape}")  # Output: (32, 10)
