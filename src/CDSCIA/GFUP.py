@@ -58,34 +58,34 @@ class GeneFlowUNetPredictor(nn.Module):
         return  logits, gene_features, attentions
 
 #
-# # 模拟输入数据
+# # Simulate input data
 # batch_size = 16
-# input_dim = 2000  # 初始输入数据维度
-# num_genes = 1024  # UNet1D输出的基因特征维度
-# num_cell_types = 10  # 细胞类型的类别数
+# input_dim = 2000  # Initial input data dimension
+# num_genes = 1024  # Gene feature dimension output by UNet1D
+# num_cell_types = 10  # Number of cell type categories
 #
-# # 初始化模型
+# # Initialize the model
 # model = GeneFlowUNetPredictor(
 #     num_genes=num_genes,
 #     num_cell_types=num_cell_types,
-#     hidden_dims=[512, 256],  # 预测层隐藏层维度
+#     hidden_dims=[512, 256],  # Hidden layer dimensions of the predictor layer
 #     dropout=0.3,
 #     activation='leaky_relu'
 # )
 #
-# # 打印模型结构
+# # Print the model structure
 # print(model)
 #
-# # 创建随机输入数据 (batch_size, input_dim)
+# # Create random input data (batch_size, input_dim)
 # input_data = torch.randn(batch_size, input_dim)
 #
-# # 测试前向传播
+# # Test the forward pass
 # logits, gene_features, attentions = model(input_data)
 #
-# # 验证输出结果
-# print("\n==== 测试结果 ====")
-# print(f"输入数据形状: {input_data.shape}")
-# print(f"分类logits形状: {logits.shape}")  # (batch_size, num_cell_types)
-# print(f"基因特征形状: {gene_features.shape}")  # (batch_size, num_genes)
+# # Verify the output results
+# print("\n==== Test Results ====")
+# print(f"Input data shape: {input_data.shape}")
+# print(f"Classification logits shape: {logits.shape}")  # (batch_size, num_cell_types)
+# print(f"Gene features shape: {gene_features.shape}")  # (batch_size, num_genes)
 # for attn_key, attn_map in attentions.items():
-#     print(f"{attn_key} 形状: {attn_map.shape}")  # Attention maps from UNet1D encoder
+#     print(f"{attn_key} shape: {attn_map.shape}")  # Attention maps from UNet1D encoder
