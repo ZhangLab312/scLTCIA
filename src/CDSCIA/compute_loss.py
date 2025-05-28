@@ -41,7 +41,7 @@ def calculate_loss(
     if not use_incremental:
         # Compute standard cross-entropy loss for all samples
         loss = non_incremental_loss_fn(outputs, target)
-        normalized_loss = loss / batch_size  # 按总样本数量归一化
+        normalized_loss = loss / batch_size  # Normalize by total number of samples
         return {"logits": outputs, "predicted_labels": predicted_labels, "total_loss": normalized_loss}
 
     # Split samples into incremental and non-incremental groups
@@ -56,11 +56,11 @@ def calculate_loss(
             target[non_incremental_indices]
         ) if non_incremental_indices.numel() > 0 else outputs.new_tensor(0.0)
     )
-    non_incremental_loss /= max(1, non_incremental_indices.numel())  # 按非增量样本数量归一化
+    non_incremental_loss /= max(1, non_incremental_indices.numel())  # Normalize by number of non-incremental samples
 
     # Incremental loss components
     if incremental_indices.numel() > 0:
-        incremental_outputs = predicted_probs.index_select(0, incremental_indices)  # 不进行 in-place 操作
+        incremental_outputs = predicted_probs.index_select(0, incremental_indices)  # Avoid in-place operations
 
         print(incremental_outputs)
         if torch.isnan(incremental_outputs).any() or torch.isinf(incremental_outputs).any():
@@ -70,11 +70,11 @@ def calculate_loss(
 
         # Uncertainty loss: Penalize predictions above threshold
         uncertainty_loss = uncertainty_loss_fn(max_probs, threshold)
-        uncertainty_loss /= max(1, incremental_indices.numel())  # 按增量样本数量归一化
+        uncertainty_loss /= max(1, incremental_indices.numel())  # Normalize by number of incremental samples
 
         # Fuzzy loss: Penalize all predictions regardless of correctness
         fuzzy_loss = fuzzy_loss_fn(max_probs, threshold)
-        fuzzy_loss /= max(1, incremental_indices.numel())  # 按增量样本数量归一化
+        fuzzy_loss /= max(1, incremental_indices.numel())  # Normalize by number of incremental samples
 
         # Combine incremental losses
         incremental_loss = alpha * uncertainty_loss + beta * fuzzy_loss
@@ -88,32 +88,32 @@ def calculate_loss(
 
 
 def cross_entropy_loss_fn(outputs, targets):
-    return F.cross_entropy(outputs, targets, reduction="sum")  # 计算均值而非总和
+    return F.cross_entropy(outputs, targets, reduction="sum")  # Calculate sum instead of mean
 
 
 def uncertainty_loss_fn(max_probs, threshold):
-    return ((max_probs - threshold).clamp(min=0) ** 2).sum()  # 改为求均值
+    return ((max_probs - threshold).clamp(min=0) ** 2).sum()  # Change to calculate mean
 
 
 def fuzzy_loss_fn(max_probs, threshold):
-    return ((max_probs - threshold) ** 2).sum()  # 改为求均值
+    return ((max_probs - threshold) ** 2).sum()  # Change to calculate mean
 
 
-# 测试用例
+# Test cases
 def test_calculate_loss():
-    # 模拟输出 logits 和 ground truth
+    # Simulate output logits and ground truth
     outputs = torch.tensor([
-        [2.0, 0.5, 0.1],  # 样本 1: 非增量，正确分类（0）
-        [0.2, 1.8, 0.1],  # 样本 2: 非增量，正确分类（1）
-        [3.1, 0.1, 2.5],  # 样本 3: 增量，错误分类（2），但预测概率高
-        [0.1, 0.1, 0.12],  # 样本 4: 增量，错误分类（2），预测概率低
-        [1.2, 0.9, 0.3],  # 样本 5: 非增量，错误分类（1）
+        [2.0, 0.5, 0.1],  # Sample 1: Non-incremental, correctly classified (0)
+        [0.2, 1.8, 0.1],  # Sample 2: Non-incremental, correctly classified (1)
+        [3.1, 0.1, 2.5],  # Sample 3: Incremental, misclassified (2), but high prediction probability
+        [0.1, 0.1, 0.12],  # Sample 4: Incremental, misclassified (2), low prediction probability
+        [1.2, 0.9, 0.3],  # Sample 5: Non-incremental, misclassified (1)
     ], dtype=torch.float32)
 
     target = torch.tensor([0, 1, 2, 2, 0], dtype=torch.long)  # Ground truth
-    incremental_mask = torch.tensor([False, False, True, True, False])  # 样本 3、4 是增量样本
+    incremental_mask = torch.tensor([False, False, True, True, False])  # Samples 3 and 4 are incremental samples
 
-    # 非增量模式测试
+    # Test in non-incremental mode
     result_no_incremental = calculate_loss(
         outputs=outputs,
         target=target,
@@ -123,11 +123,11 @@ def test_calculate_loss():
         fuzzy_loss_fn=fuzzy_loss_fn,
         use_incremental=False
     )
-    print("非增量模式:")
-    print("预测标签:", result_no_incremental['predicted_labels'].tolist())
-    print("总损失:", result_no_incremental['total_loss'].item())
+    print("Non-incremental mode:")
+    print("Predicted labels:", result_no_incremental['predicted_labels'].tolist())
+    print("Total loss:", result_no_incremental['total_loss'].item())
 
-    # 增量模式测试
+    # Test in incremental mode
     result_incremental = calculate_loss(
         outputs=outputs,
         target=target,
@@ -139,22 +139,22 @@ def test_calculate_loss():
         threshold=0.5,
         device=torch.device('cpu')
     )
-    print("\n增量模式:")
-    print("预测标签:")
+    print("\nIncremental mode:")
+    print("Predicted labels:")
     for i, label in enumerate(result_incremental['predicted_labels'].tolist()):
         if incremental_mask[i]:
             if label == -1:
-                print(f"样本 {i + 1}: 正确识别增量样本 (标签 -1)")
+                print(f"Sample {i + 1}: Correctly identified as incremental sample (label -1)")
             else:
-                print(f"样本 {i + 1}: 错误分类为 {label}")
+                print(f"Sample {i + 1}: Misclassified as {label}")
         else:
-            # 对非增量样本，输出是否正确
+            # For non-incremental samples, output correctness
             is_correct = (label == target[i]).item()
-            correctness = "正确" if is_correct else "错误"
-            print(f"样本 {i + 1}: 非增量样本，预测为 {label} ({correctness})")
+            correctness = "correct" if is_correct else "incorrect"
+            print(f"Sample {i + 1}: Non-incremental sample, predicted as {label} ({correctness})")
 
-    print("总损失:", result_incremental['total_loss'].item())
+    print("Total loss:", result_incremental['total_loss'].item())
 
 
-# 运行测试用例
+# Run test cases
 test_calculate_loss()
