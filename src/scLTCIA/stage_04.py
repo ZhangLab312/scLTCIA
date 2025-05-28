@@ -29,8 +29,8 @@ def load_and_preprocess_data(
         random_state=20020130,
         batch_size=512,
         device=None,
-        end_1=8,
-        end_2=10
+        end_1=10,
+        end_2=12
 ):
     """
     Load and preprocess h5ad data file, and generate DataLoader.
