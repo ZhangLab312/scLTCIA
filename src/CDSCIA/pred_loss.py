@@ -140,23 +140,3 @@ class StudentIncrementalCrossEntropyLoss(nn.Module):
         total_fuzzy_loss = self.alpha * uncertainty_loss + self.beta * fuzzy_loss
 
         return total_fuzzy_loss
-
-
-# # 输入数据
-# logits = torch.randn(32, 10)  # 32个样本，10个类别
-# target = torch.randint(0, 10, (32,))  # 样本标签
-# incremental_mask = torch.randint(0, 2, (32,), dtype=torch.bool)  # 增量掩码
-# is_incremental = True  # 增量模式
-# threshold = 0.5  # 分类阈值
-# lambda_fuzzy = 2.0  # 模糊引导损失权重
-# gamma = 1.5  # 熵正则化权重
-# alpha = 2.0  # 动态距离调整因子
-#
-# # 实例化改进后的损失类
-# loss_fn = StudentIncrementalCrossEntropyLoss(
-#     threshold=threshold, lambda_fuzzy=lambda_fuzzy, gamma=gamma, alpha=alpha
-# )
-#
-# # 计算损失
-# loss, pred_labels = loss_fn(logits, target, incremental_mask, is_incremental)
-# print(f"Total loss: {loss.item()}, Predicted labels: {pred_labels}")
