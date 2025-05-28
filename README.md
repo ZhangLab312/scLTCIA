@@ -51,10 +51,10 @@ The curated benchmark datasets used in our study are publicly available on **Zen
 
 This collection includes five widely used human single-cell transcriptomic datasets across diverse tissues and biological conditions:
 
-- **He et al.** (Cell Research, 2021): Human embryonic skeletal development  
-- **Madissoon et al.** (Genome Biology, 2020): Stability of lung, spleen, and esophagus  
-- **Stewart et al.** (Science, 2019): Immune zonation in human kidney  
-- **Vento-Tormo et al.** (Nature, 2018): Early maternal–fetal interface  
+- **He** (Cell Research, 2021): Human embryonic skeletal development  
+- **Madissoon** (Genome Biology, 2020): Stability of lung, spleen, and esophagus  
+- **Stewart** (Science, 2019): Immune zonation in human kidney  
+- **Vento** (Nature, 2018): Early maternal–fetal interface  
 - **Zheng68k** (Nature Communications, 2017): PBMC profiling with 10x Genomics
 
 These datasets have been preprocessed and harmonized to support evaluation in **long-tailed** and **class-incremental** annotation tasks, as used in our **scLTCIA** framework.
