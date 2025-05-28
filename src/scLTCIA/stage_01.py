@@ -30,76 +30,76 @@ def load_and_preprocess_data(
         end=6
 ):
     """
-    加载和预处理 h5ad 数据文件，并生成 DataLoader。
+    Load and preprocess h5ad data file, and generate DataLoader.
 
     Args:
-        file_path (str): h5ad 文件的路径。
-        cell_type_column (str): 细胞类型所在列名。
-        test_size (float): 测试集比例。
-        random_state (int): 随机种子。
-        batch_size (int): DataLoader 的批次大小。
-        device (torch.device, optional): 数据加载的设备，默认为自动检测。
-        end (int): 初始阶段类别游标。
+        file_path (str): Path to the h5ad file.
+        cell_type_column (str): Column name where cell types are located.
+        test_size (float): Proportion of the test set.
+        random_state (int): Random seed.
+        batch_size (int): Batch size for DataLoader.
+        device (torch.device, optional): Device to load data to, defaults to auto-detect.
+        end (int): Cursor for initial stage categories.
 
     Returns:
-        dict: 包含以下键值对的数据字典：
-            - 'train_loader': 训练数据的 DataLoader。
-            - 'test_loader': 测试数据的 DataLoader。
-            - 'encoder': 训练时使用的 OneHotEncoder 实例。
-            - 'device': 使用的设备。
-            - 'train_incremental_mask': 训练集的增量类布尔掩码。
-            - 'test_incremental_mask': 测试集的增量类布尔掩码。
+        dict: Data dictionary containing the following key-value pairs:
+            - 'train_loader': DataLoader for training data.
+            - 'test_loader': DataLoader for test data.
+            - 'encoder': OneHotEncoder instance used during training.
+            - 'device': Device used.
+            - 'train_incremental_mask': Boolean mask for incremental classes in the training set.
+            - 'test_incremental_mask': Boolean mask for incremental classes in the test set.
     """
-    # 检查设备
+    # Check device
     if device is None:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # 读取 h5ad 文件
+    # Read h5ad file
     adata = sc.read(file_path)
 
-    # 获取细胞类型列
+    # Get cell type column
     # cell_types = adata.obs[cell_type_column]
 
-    # 获取细胞类型名称及其对应的数量
+    # Get cell type names and their corresponding counts
     cell_type_counts = adata.obs['cell_type1'].value_counts()
-    # 按照细胞类型数量排序（从多到少）
+    # Sort cell types by count (from most to least)
     sorted_cell_types = cell_type_counts.index.tolist()
-    # 划分需要的细胞类型
+    # Divide the required cell types
     first_cell_types = sorted_cell_types[:end]
-    # 筛选出后的细胞类型数据
+    # Filtered cell type data
     adata = adata[adata.obs['cell_type1'].isin(first_cell_types), :]
 
-    # 获取细胞类型列
+    # Get cell type column
     cell_types = adata.obs[cell_type_column]
     num_cell_types = len(set(cell_types))
 
-    # 按细胞类型进行划分
+    # Split by cell type
     train_indices, test_indices = train_test_split(
         adata.obs.index, stratify=cell_types, test_size=test_size, random_state=random_state
     )
 
-    # 获取训练集和测试集
+    # Get training and test sets
     X_train = adata[train_indices, :].X.todense()
     X_test = adata[test_indices, :].X.todense()
     y_train = adata[train_indices, :].obs[cell_type_column]
     y_test = adata[test_indices, :].obs[cell_type_column]
 
-    # 打印数据集大小
+    # Print dataset sizes
     print(f"Training set X shape: {X_train.shape}")
     print(f"Test set X shape: {X_test.shape}")
     print(f"Training set labels shape: {y_train.shape}")
     print(f"Test set labels shape: {y_test.shape}")
 
-    # 增量类布尔标签，全部设置为 False
+    # Incremental class boolean labels, all set to False
     train_incremental_mask = np.zeros(y_train.shape, dtype=bool)
     test_incremental_mask = np.zeros(y_test.shape, dtype=bool)
 
-    # 标签编码
+    # Label encoding
     encoder = OneHotEncoder(sparse_output=True)
     y_train_encoded = encoder.fit_transform(y_train.to_numpy().reshape(-1, 1)).toarray()
     y_test_encoded = encoder.transform(y_test.to_numpy().reshape(-1, 1)).toarray()
 
-    # 转换为 PyTorch 张量
+    # Convert to PyTorch tensors
     X_train_tensor = torch.FloatTensor(X_train).to(device)
     X_test_tensor = torch.FloatTensor(X_test).to(device)
     y_train_tensor = torch.FloatTensor(y_train_encoded).to(device)
@@ -107,7 +107,7 @@ def load_and_preprocess_data(
     train_incremental_tensor = torch.BoolTensor(train_incremental_mask).to(device)
     test_incremental_tensor = torch.BoolTensor(test_incremental_mask).to(device)
 
-    # 创建 DataLoader
+    # Create DataLoader
     train_dataset = TensorDataset(X_train_tensor, y_train_tensor, train_incremental_tensor)
     test_dataset = TensorDataset(X_test_tensor, y_test_tensor, test_incremental_tensor)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -136,7 +136,7 @@ def fuzzy_loss_fn(max_probs, threshold):
     return ((max_probs - threshold) ** 2).sum()
 
 
-# 通用训练函数
+# General training function
 def train(model, train_loader, optimizer, device):
     model.train()
     running_loss = 0.0
@@ -185,7 +185,7 @@ def train(model, train_loader, optimizer, device):
     return train_loss, train_accuracy
 
 
-# 通用验证函数
+# General validation function
 def validate(model, test_loader, device):
     model.eval()
     running_test_loss = 0.0
@@ -231,7 +231,7 @@ def validate(model, test_loader, device):
     return test_loss, test_accuracy
 
 
-# 早停机制
+# Early stopping mechanism
 class EarlyStopping:
     def __init__(self, patience=5, verbose=True, delta=0, save_path=None):
         self.patience = patience
@@ -266,18 +266,18 @@ class EarlyStopping:
         return False
 
     def save_model(self, model):
-        # 保存模型权重到指定路径
+        # Save model weights to the specified path
         torch.save(model.state_dict(), self.save_path)
         print(f"Model saved to {self.save_path}")
 
     def load_best_model(self, model):
-        # 加载最佳模型
+        # Load the best model
         model.load_state_dict(self.best_model_wts)
 
 
-# 通用绘图函数
+# General plotting function
 def plot_metrics(train_losses, test_losses, train_accuracies, test_accuracies):
-    # 绘制损失图
+    # Plot loss graph
     plt.figure()
     plt.plot(train_losses, label='Train Loss')
     plt.plot(test_losses, label='Test Loss')
@@ -285,7 +285,7 @@ def plot_metrics(train_losses, test_losses, train_accuracies, test_accuracies):
     plt.title('Loss vs Epoch')
     plt.show()
 
-    # 绘制准确率图
+    # Plot accuracy graph
     plt.figure()
     plt.plot(train_accuracies, label='Train Accuracy')
     plt.plot(test_accuracies, label='Test Accuracy')
@@ -294,7 +294,7 @@ def plot_metrics(train_losses, test_losses, train_accuracies, test_accuracies):
     plt.show()
 
 
-# 创建神经网络模型
+# Create neural network model
 class Model(nn.Module):
     def __init__(self, input_size, num_genes, num_cell_types):
         super(Model, self).__init__()
@@ -314,13 +314,13 @@ class Model(nn.Module):
 
 
 if __name__ == "__main__":
-    # 参数
+    # Parameters
     file_path = r"He_Long_Bone_1024.h5ad"
     cell_type_column = 'cell_type1'
     batch_size = 256
     save_path = './pth/stage_01_model.pth'
 
-    # 调用模块
+    # Call the module
     data = load_and_preprocess_data(
         file_path=file_path,
         cell_type_column=cell_type_column,
@@ -328,24 +328,24 @@ if __name__ == "__main__":
         end=6
     )
 
-    # 获取 DataLoader
+    # Get DataLoader
     train_loader = data["train_loader"]
     test_loader = data["test_loader"]
     device = data["device"]
     encoder = data["encoder"]
     num_cell_types = data["num_cell_types"]
 
-    # 打印设备信息
+    # Print device information
     print(f"Using device: {device}")
 
-    # 初始化模型、损失函数和优化器
+    # Initialize model, loss function, and optimizer
     model = Model(input_size=1024, num_genes=1024, num_cell_types=num_cell_types).to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.00001)
 
-    # 初始化早停机制
+    # Initialize early stopping mechanism
     early_stopping = EarlyStopping(patience=10, verbose=True, save_path=save_path)
 
-    # 训练和验证
+    # Training and validation
     num_epochs = 50
     train_losses, test_losses = [], []
     train_accuracies, test_accuracies = [], []
@@ -363,21 +363,21 @@ if __name__ == "__main__":
               f'Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.4f}, '
               f'Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}')
 
-        # 早停检查
+        # Early stopping check
         if early_stopping(test_loss, model):
             break
 
-    # 加载最好的模型
+    # Load the best model
     early_stopping.load_best_model(model)
 
-    # 绘制图表
+    # Plot the graphs
     plot_metrics(train_losses, test_losses, train_accuracies, test_accuracies)
 
-    # 记录早停保存的最佳轮次的索引（0-based）
-    # 通常在早停实现中会返回或记录这个值
-    best_epoch = early_stopping.best_epoch  # 早停保存的最佳轮次（0-based）
+    # Record the index of the best epoch saved by early stopping (0-based)
+    # This value is typically returned or recorded in the early stopping implementation
+    best_epoch = early_stopping.best_epoch  # Best epoch saved by early stopping (0-based)
 
-    # 最终评估
+    # Final evaluation
     final_train_accuracy = train_accuracies[best_epoch]
     final_test_accuracy = test_accuracies[best_epoch]
     print(f'Final Training Accuracy: {final_train_accuracy:.4f} (Epoch {best_epoch + 1})')
